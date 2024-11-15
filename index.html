@@ -56,25 +56,18 @@
                 <div id='schema-textarea' rows="30" style="width: 100%; font-family: monospace;"
                     class='form-control'></div>
             </div>
-            <div class='col-3 col-md-3 w-3/12' style="display:none">
+            <div class='col-3 col-md-3 w-3/12'>
                 <h1>2. Editor</h1>
                 <p>Below is the editor generated from the JSON Schema part of the OO-LD Schema. Changes are synced with the JSON/YAML Output and JSON-LD playground (and vice versa).</p>
                 <div id="json-editor-form" class="json-editor-compact"></div>
             </div>
-            <div class='col-3 col-md-3 w-3/12'>
-                <h1>2. Python</h1>
-                <p>Below is the editor generated from the JSON Schema part of the OO-LD Schema. Changes are synced with the JSON/YAML Output and JSON-LD playground (and vice versa).</p>
-                <div id="code" rows="15"></div>
-                <button class='btn btn-primary btn-block' onclick="evaluatePython()">Run Python Code</button>
-                <h2>Debug Console</h2>
-                <div id="output" style="width: 100%;" rows="6" disabled></div>
-            </div>
+
             <div class='col-3 col-md-3 w-3/12'>
                 <h1>3. JSON/YAML Output</h1>
                 <p>You can also make changes to the JSON here and set the value in the editor by clicking "Update Form"
                 </p>
                 <label for="output-textarea"></label>
-                <button class='btn btn-primary btn-block' id='setvalue'>Update Form</button>
+                <button class='btn btn-primary btn-block' id='setvalue'>Generate Code</button>
                 <div id='output-textarea' rows="15" style="width: 100%; font-family: monospace;"
                     class='form-control'></div>
                 <h2>Validation</h2>
@@ -162,84 +155,195 @@
                     </div>
                 </div>
             </div>
-            <div class='col-3 col-md-3 w-3/12'>
+            <div class='col-3 col-md-3 w-3/12' style="display:none">
                 <h1>4. JSON-LD</h1>
                 <p>JSON originates from the Form-Editor while the context is extracted from the JSON-LD part of the OO-LD Schema. Scroll down to see processed forms, e. g. RDF.
                 </p>
                 <iframe id="json-ld-playground-iframe" src="./json-ld/playground/" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+            <div class='col-3 col-md-3 w-3/12'>
+                <h1>4. Python</h1>
+                <p>Below is the editor generated from the JSON Schema part of the OO-LD Schema. Changes are synced with the JSON/YAML Output and JSON-LD playground (and vice versa).</p>
+                <div id="code" rows="15"></div>
+                <button class='btn btn-primary btn-block' onclick="evaluatePython()">Generate AST</button>
+                <h2>Debug Console</h2>
+                <div id="output" style="width: 100%;" rows="6" disabled></div>
             </div>
         </div>
     </div>
     <script>
 
         var defaultSchema = {
-          "@context": [
-            "https://oo-ld.github.io/playground/examples/Thing.schema.json",
-            {
-              "date": "schema:birthDate",
-              "gender": "schema:gender",
-              "location": "schema:address",
-              "city": "schema:addressLocality",
-              "state": "schema:addressRegion"
-            }
-          ],
-          "allOf": [
-            {
-              "$ref": "https://oo-ld.github.io/playground/examples/Thing.schema.json"
-            }
-          ],
-          "$comment": "A Person is a Thing, so we import the context (per @context) and schema (per allOf.$ref) of Thing",
-          "title": "Person",
-          "type": "object",
-          "required": [
-            "name"
-          ],
-          "properties": {
-            "type": {
-              "$comment": "Already defined in playground:Thing -> we override just the default",
-              "default": "playground:Person"
-            },
-            "name": {
-              "description": "First and Last name",
-              "minLength": 4,
-              "default": "Jeremy Dorn"
-            },
-            "age": {
-              "type": "integer",
-              "default": 25,
-              "minimum": 18,
-              "maximum": 99
-            },
-            "gender": {
-              "type": "string",
-              "enum": [
-                "male",
-                "female",
-                "other"
-              ]
-            },
-            "date": {
-              "type": "string",
-              "format": "date",
-              "options": {
-                "flatpickr": {}
-              }
-            },
-            "location": {
-              "type": "object",
-              "title": "Location",
-              "properties": {
-                "city": {
-                  "type": "string",
-                  "default": "San Francisco"
-                },
-                "state": {
-                  "type": "string",
-                  "default": "CA"
+            "@context": [
+                "https://oo-ld.github.io/playground/examples/Thing.schema.json",
+                {
                 }
-              }
-            }
-          }
+            ],
+            "allOf": [
+            ],
+            "title": "AWL",
+            "type": "object",
+            "properties": {
+                "_type": {
+                "type": "string",
+                "default": "Module"
+                },
+                "body": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                    "_type": {
+                        "type": "string",
+                        "default": "If"
+                    },
+                    "body": {
+                        "type": "array",
+                        "items": {
+                        "type": "object",
+                        "properties": {
+                            "_type": {
+                            "type": "string",
+                            "default": "Assign"
+                            },
+                            "targets": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                "_type": {
+                                    "type": "string",
+                                    "default": "Name"
+                                },
+                                "id": {
+                                    "type": "string"
+                                }
+                                },
+                                "required": ["_type", "id"]
+                            }
+                            },
+                            "value": {
+                            "type": "object",
+                            "properties": {
+                                "_type": {
+                                "type": "string",
+                                "default": "Constant"
+                                },
+                                "value": {
+                                "type": "integer"
+                                }
+                            },
+                            "required": ["_type", "value"]
+                            }
+                        },
+                        "required": ["_type", "targets", "value"]
+                        }
+                    },
+                    "orelse": {
+                        "type": "array",
+                        "items": {
+                        "type": "object",
+                        "properties": {
+                            "_type": {
+                            "type": "string",
+                            "default": "Assign"
+                            },
+                            "targets": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                "_type": {
+                                    "type": "string",
+                                    "default": "Name"
+                                },
+                                "id": {
+                                    "type": "string"
+                                }
+                                },
+                                "required": ["_type", "id"]
+                            }
+                            },
+                            "value": {
+                            "type": "object",
+                            "properties": {
+                                "_type": {
+                                "type": "string",
+                                "default": "Constant"
+                                },
+                                "value": {
+                                "type": "integer"
+                                }
+                            },
+                            "required": ["_type", "value"]
+                            }
+                        },
+                        "required": ["_type", "targets", "value"]
+                        }
+                    },
+                    "test": {
+                        "type": "object",
+                        "properties": {
+                        "_type": {
+                            "type": "string",
+                            "default": "Compare"
+                        },
+                        "comparators": {
+                            "type": "array",
+                            "items": {
+                            "type": "object",
+                            "properties": {
+                                "_type": {
+                                "type": "string",
+                                "default": "Constant"
+                                },
+                                "value": {
+                                "type": "integer"
+                                }
+                            },
+                            "required": ["_type", "value"]
+                            }
+                        },
+                        "left": {
+                            "type": "object",
+                            "properties": {
+                            "_type": {
+                                "type": "string",
+                                "default": "Name"
+                            },
+                            "id": {
+                                "type": "string"
+                            }
+                            },
+                            "required": ["_type", "id"]
+                        },
+                        "ops": {
+                            "type": "array",
+                            "items": {
+                            "type": "object",
+                            "properties": {
+                                "_type": {
+                                "type": "string",
+                                "default": "Eq"
+                                }
+                            },
+                            "required": ["_type"]
+                            }
+                        }
+                        },
+                        "required": ["_type"]
+                    }
+                    },
+                    "required": ["_type", "body"]
+                }
+                },
+                "type_ignores": {
+                "type": "array",
+                "items": {},
+                "options": {"hidden": true}
+                }
+            },
+            "required": ["_type", "body", "type_ignores"]
         }
 
 const init_code = `
@@ -249,6 +353,9 @@ await micropip.install("pydantic")
 await micropip.install("ssl")
 await micropip.install("requests")
 await micropip.install("datamodel-code-generator[http]")
+await micropip.install("ast2json")
+await micropip.install("json2ast")
+await micropip.install("pyyaml")
 
 await micropip.install('pyodide-http')
 # 2. Patch requests
@@ -266,38 +373,108 @@ def patch_get(url, headers, verify, follow_redirects, params
 httpx.get = patch_get
 `;
 
-        const codegen_code = `
-from pydantic import BaseModel
+const class_code = `
+import js
 import json
-from datamodel_code_generator import DataModelType, InputFileType, generate
-from datamodel_code_generator.parser.jsonschema import JsonSchemaParser
+import yaml
+import ast
+from ast2json import ast2json
+from json2ast import json2ast
 
-import js
+class AstSerialization:
+    def __init__(self):
+        pass
+        
+    @staticmethod
+    def del_keys(d: dict, keys: list) -> dict:
+        for key in keys:
+            if key in d:
+                del d[key]
+        for key, value in d.items():
+            if isinstance(value, dict):
+                AstSerialization.del_keys(value, keys)
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict):
+                        AstSerialization.del_keys(item, keys)
+        return d
 
-schema =  js.window.ace.edit("schema-textarea").getValue()
+    @staticmethod
+    def add_key(d: dict, k: str, v) -> dict:
+        d[k] = v
+        for key, value in d.items():
+            if isinstance(value, dict):
+                AstSerialization.add_key(value, k, v)
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict):
+                        AstSerialization.add_key(item, k, v)
+        return d
+        
+    def parse(self, source: str) -> dict:
+        ast_dict = ast2json(ast.parse(source))
+        #astj = ast2json(ast.parse("""
+        #c = Class()
+        #c.x.y = 1
+        #a = {}
+        #a["b"] = 1
+        #test(a["b"]["c"])
+        #"""))
+        rm_keywords = [
+            "col_offset",
+            "end_col_offset",
+            "end_lineno",
+            "lineno",
+            "type_comment",
+            "n",
+            "s",
+            "kind",
+            "ctx",
+        ]
+        
+            
+        ast_dict = self.del_keys(ast_dict, rm_keywords) # remove annotations
+        self.ast_dict = ast_dict
+        return ast_dict
 
-parser = JsonSchemaParser(
-    schema,
-    field_include_all_keys=True,
-    # use_default = True,
-    enum_field_as_literal="all",
-    use_title_as_name=True,
-    use_schema_description=True,
-    use_field_description=True,
-    encoding="utf-8",
-    use_double_quotes=True,
-    collapse_root_models=True,
-    reuse_model=True,
-)
-content = str(parser.parse())
-content = content + """
-p = Person(name="Python Generated")
+    def unparse(self, ast_dict: dict = None) -> str:
+        if ast_dict is None:
+            ast_dict = self.ast_dict
+        ast_dict = self.add_key(ast_dict, "lineno", 0) # needed to unparse
+        ast_tree = json2ast(ast_dict)
+        source = ast.unparse(ast_tree)
+        return source
 
-# export as json
-import js
-js.window.jsoneditor.setValue(js.window.JSON.parse(p.json()))
-"""
+    def dumps(self, format = "yaml") -> str:
+        if format == "json": return json.dumps(self.ast_dict, indent=4)
+        elif format == "yaml": return yaml.dump(self.ast_dict, indent=4)
 
+`;
+
+const default_code = `
+if a == 1:
+    b = 1
+else:
+    b = 2
+`;
+
+const astgen_code = class_code + `
+print("Generating AST...")
+asts = AstSerialization()
+source = js.window.ace.edit("code").getValue()
+asts.parse(source)
+content = asts.dumps()
+content_json = asts.dumps(format="json")
+#print(asts.dumps(format="json"))
+#print(asts.unparse())
+js.window.ace.edit("output-textarea").setValue(content)
+js.window.jsoneditor.setValue(js.window.JSON.parse(content_json))
+`
+
+const codegen_code = class_code + `
+print("Generating Code...")
+ast_dict =  js.window.ace.edit("output-textarea").getValue()
+content = asts.unparse(yaml.safe_load(ast_dict))
 js.window.ace.edit("code").setValue(content)
 `;
 
@@ -382,6 +559,7 @@ js.window.ace.edit("code").setValue(content)
                 addToOutput(err);
             }
             addToOutput("Ready!\n");
+            code.setValue(default_code);
             return pyodide;
         }
         let pyodideReadyPromise = main();
@@ -399,14 +577,14 @@ js.window.ace.edit("code").setValue(content)
         async function evaluatePython() {
             let pyodide = await pyodideReadyPromise;
             try {
-                let output = pyodide.runPython(code.getValue());
+                let output = pyodide.runPython(astgen_code);
                 addToOutput(output);
             } catch (err) {
                 addToOutput(err);
             }
         }
 
-        generatePython();
+        evaluatePython();
 
         /* -------------------------------------------------------------- parse url */
 
@@ -453,7 +631,6 @@ js.window.ace.edit("code").setValue(content)
             //schemaTextarea.setValue(JSON.stringify(data.options.schema, null, 2))
             schemaTextarea.setValue(jsyaml.dump(data.options.schema));
             schemaTextarea.clearSelection(1)
-            generatePython();
 
             // theme
             var themeMap = {
@@ -664,6 +841,8 @@ js.window.ace.edit("code").setValue(content)
                     validateTextarea.value = 'valid'
                 }
                 updateDirectLink()
+
+                generatePython();
 
                 //copy the data
                 var jsonld_data = JSON.parse(JSON.stringify(data.json));
