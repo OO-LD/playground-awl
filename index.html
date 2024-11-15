@@ -343,7 +343,64 @@
                 "options": {"hidden": true}
                 }
             },
-            "required": ["_type", "body", "type_ignores"]
+            "required": ["_type", "body", "type_ignores"],
+            "default": {
+                "_type": "Module",
+                "body": [
+                    {
+                    "_type": "If",
+                    "body": [
+                        {
+                        "_type": "Assign",
+                        "targets": [
+                            {
+                            "_type": "Name",
+                            "id": "b"
+                            }
+                        ],
+                        "value": {
+                            "_type": "Constant",
+                            "value": 1
+                        }
+                        }
+                    ],
+                    "orelse": [
+                        {
+                        "_type": "Assign",
+                        "targets": [
+                            {
+                            "_type": "Name",
+                            "id": "b"
+                            }
+                        ],
+                        "value": {
+                            "_type": "Constant",
+                            "value": "test"
+                        }
+                        }
+                    ],
+                    "test": {
+                        "_type": "Compare",
+                        "comparators": [
+                        {
+                            "_type": "Constant",
+                            "value": 1
+                        }
+                        ],
+                        "left": {
+                        "_type": "Name",
+                        "id": "a"
+                        },
+                        "ops": [
+                        {
+                            "_type": "Eq"
+                        }
+                        ]
+                    }
+                    }
+                ],
+                "type_ignores": []
+                }
         }
 
 const init_code = `
@@ -473,6 +530,7 @@ js.window.jsoneditor.setValue(js.window.JSON.parse(content_json))
 
 const codegen_code = class_code + `
 print("Generating Code...")
+asts = AstSerialization()
 ast_dict =  js.window.ace.edit("output-textarea").getValue()
 content = asts.unparse(yaml.safe_load(ast_dict))
 js.window.ace.edit("code").setValue(content)
@@ -584,7 +642,7 @@ js.window.ace.edit("code").setValue(content)
             }
         }
 
-        evaluatePython();
+        generatePython();
 
         /* -------------------------------------------------------------- parse url */
 
@@ -842,7 +900,7 @@ js.window.ace.edit("code").setValue(content)
                 }
                 updateDirectLink()
 
-                generatePython();
+                //generatePython();
 
                 //copy the data
                 var jsonld_data = JSON.parse(JSON.stringify(data.json));
