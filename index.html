@@ -56,14 +56,21 @@
                 <div id='schema-textarea' rows="30" style="width: 100%; font-family: monospace;"
                     class='form-control'></div>
             </div>
-            <div class='col-3 col-md-3 w-3/12'>
+            <div class='col-3 col-md-3 w-3/12' style="display: none">
                 <h1>2. Editor</h1>
                 <p>Below is the editor generated from the JSON Schema part of the OO-LD Schema. Changes are synced with the JSON/YAML Output and JSON-LD playground (and vice versa).</p>
                 <div id="json-editor-form" class="json-editor-compact"></div>
             </div>
-
             <div class='col-3 col-md-3 w-3/12'>
-                <h1>3. JSON/YAML Output</h1>
+                <h1>2. Python</h1>
+                <p>Python code represention of the abstract syntax tree (AST). Changes are synced with the JSON/YAML Output and JSON-LD playground (and vice versa) if you click "Geneate AST".</p>
+                <div id="code" rows="15"></div>
+                <button class='btn btn-primary btn-block' onclick="evaluatePython()">Generate AST</button>
+                <h2>Debug Console</h2>
+                <div id="output" style="width: 100%;" rows="6" disabled></div>
+            </div>
+            <div class='col-3 col-md-3 w-3/12'>
+                <h1>3. JSON/YAML AST Serialization</h1>
                 <p>You can also make changes to the JSON here and set the value in the editor by clicking "Update Form"
                 </p>
                 <label for="output-textarea"></label>
@@ -155,253 +162,65 @@
                     </div>
                 </div>
             </div>
-            <div class='col-3 col-md-3 w-3/12' style="display:none">
+            <div class='col-3 col-md-3 w-3/12'>
                 <h1>4. JSON-LD</h1>
                 <p>JSON originates from the Form-Editor while the context is extracted from the JSON-LD part of the OO-LD Schema. Scroll down to see processed forms, e. g. RDF.
                 </p>
                 <iframe id="json-ld-playground-iframe" src="./json-ld/playground/" style="width: 100%; height: 100%; border: none;"></iframe>
             </div>
-            <div class='col-3 col-md-3 w-3/12'>
-                <h1>4. Python</h1>
-                <p>Below is the editor generated from the JSON Schema part of the OO-LD Schema. Changes are synced with the JSON/YAML Output and JSON-LD playground (and vice versa).</p>
-                <div id="code" rows="15"></div>
-                <button class='btn btn-primary btn-block' onclick="evaluatePython()">Generate AST</button>
-                <h2>Debug Console</h2>
-                <div id="output" style="width: 100%;" rows="6" disabled></div>
-            </div>
+
         </div>
     </div>
     <script>
 
         var defaultSchema = {
-            "@context": [
-                "https://oo-ld.github.io/playground/examples/Thing.schema.json",
-                {
-                }
-            ],
-            "allOf": [
-            ],
-            "title": "AWL",
-            "type": "object",
-            "properties": {
-                "_type": {
-                "type": "string",
-                "default": "Module"
-                },
-                "body": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                    "_type": {
-                        "type": "string",
-                        "default": "If"
-                    },
-                    "body": {
-                        "type": "array",
-                        "items": {
-                        "type": "object",
-                        "properties": {
-                            "_type": {
-                            "type": "string",
-                            "default": "Assign"
-                            },
-                            "targets": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                "_type": {
-                                    "type": "string",
-                                    "default": "Name"
-                                },
-                                "id": {
-                                    "type": "string"
-                                }
-                                },
-                                "required": ["_type", "id"]
-                            }
-                            },
-                            "value": {
-                            "type": "object",
-                            "properties": {
-                                "_type": {
-                                "type": "string",
-                                "default": "Constant"
-                                },
-                                "value": {
-                                "type": "integer"
-                                }
-                            },
-                            "required": ["_type", "value"]
-                            }
-                        },
-                        "required": ["_type", "targets", "value"]
-                        }
-                    },
-                    "orelse": {
-                        "type": "array",
-                        "items": {
-                        "type": "object",
-                        "properties": {
-                            "_type": {
-                            "type": "string",
-                            "default": "Assign"
-                            },
-                            "targets": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                "_type": {
-                                    "type": "string",
-                                    "default": "Name"
-                                },
-                                "id": {
-                                    "type": "string"
-                                }
-                                },
-                                "required": ["_type", "id"]
-                            }
-                            },
-                            "value": {
-                            "type": "object",
-                            "properties": {
-                                "_type": {
-                                "type": "string",
-                                "default": "Constant"
-                                },
-                                "value": {
-                                "type": "integer"
-                                }
-                            },
-                            "required": ["_type", "value"]
-                            }
-                        },
-                        "required": ["_type", "targets", "value"]
-                        }
-                    },
-                    "test": {
-                        "type": "object",
-                        "properties": {
-                        "_type": {
-                            "type": "string",
-                            "default": "Compare"
-                        },
-                        "comparators": {
-                            "type": "array",
-                            "items": {
-                            "type": "object",
-                            "properties": {
-                                "_type": {
-                                "type": "string",
-                                "default": "Constant"
-                                },
-                                "value": {
-                                "type": "integer"
-                                }
-                            },
-                            "required": ["_type", "value"]
-                            }
-                        },
-                        "left": {
-                            "type": "object",
-                            "properties": {
-                            "_type": {
-                                "type": "string",
-                                "default": "Name"
-                            },
-                            "id": {
-                                "type": "string"
-                            }
-                            },
-                            "required": ["_type", "id"]
-                        },
-                        "ops": {
-                            "type": "array",
-                            "items": {
-                            "type": "object",
-                            "properties": {
-                                "_type": {
-                                "type": "string",
-                                "default": "Eq"
-                                }
-                            },
-                            "required": ["_type"]
-                            }
-                        }
-                        },
-                        "required": ["_type"]
-                    }
-                    },
-                    "required": ["_type", "body"]
-                }
-                },
-                "type_ignores": {
-                "type": "array",
-                "items": {},
-                "options": {"hidden": true}
-                }
-            },
-            "required": ["_type", "body", "type_ignores"],
-            "default": {
-                "_type": "Module",
-                "body": [
-                    {
-                    "_type": "If",
-                    "body": [
-                        {
-                        "_type": "Assign",
-                        "targets": [
-                            {
-                            "_type": "Name",
-                            "id": "b"
-                            }
-                        ],
-                        "value": {
-                            "_type": "Constant",
-                            "value": 1
-                        }
-                        }
-                    ],
-                    "orelse": [
-                        {
-                        "_type": "Assign",
-                        "targets": [
-                            {
-                            "_type": "Name",
-                            "id": "b"
-                            }
-                        ],
-                        "value": {
-                            "_type": "Constant",
-                            "value": "test"
-                        }
-                        }
-                    ],
-                    "test": {
-                        "_type": "Compare",
-                        "comparators": [
-                        {
-                            "_type": "Constant",
-                            "value": 1
-                        }
-                        ],
-                        "left": {
-                        "_type": "Name",
-                        "id": "a"
-                        },
-                        "ops": [
-                        {
-                            "_type": "Eq"
-                        }
-                        ]
-                    }
-                    }
-                ],
-                "type_ignores": []
-                }
+  "@context": [
+    {
+      "awl": "https://oo-ld.github.io/awl-schema/",
+      "ex": "https://example.org/",
+      "@base": "https://oo-ld.github.io/awl-schema/",
+      "_type": "@type",
+      "id": "@id",
+      "body": "awl:HasPart",
+      "Name": {
+        "@id": "awl:Variable",
+        "@context": {
+          "@base": "https://example.org/"
         }
+      },
+      "targets": "awl:HasTarget",
+      "value": {
+        "@id": "awl:HasValue",
+        "@context": {
+          "value": "@value"
+        }
+      },
+      "If": {
+        "@id": "awl:If",
+        "@context": {
+          "body": "awl:IfTrue"
+        }
+      },
+      "orelse": "awl:IfFalse",
+      "test": "awl:HasCondition",
+      "comparators": "awl:HasRightHandComparator",
+      "ops": "awl:HasOperator",
+      "left": "awl:HasLeftHandComparator",
+      "func": {
+        "@id": "awl:HasFunctionCall",
+        "@context": {
+          "@base": "https://example.org/",
+          "Name": "awl:Function"
+        }
+      },
+      "args": "awl:HasArgument",
+      "_keywords": "awl:HasKeywordArgument",
+      "arg": "awl:HasKey"
+    }
+  ],
+  "title": "AWL",
+  "type": "object"
+}
 
 const init_code = `
 import micropip
