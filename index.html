@@ -350,8 +350,11 @@ js.window.jsoneditor.setValue(js.window.JSON.parse(content_json))
 const codegen_code = class_code + `
 print("Generating Code...")
 asts = AstSerialization()
-ast_dict =  js.window.ace.edit("output-textarea").getValue()
-content = asts.unparse(yaml.safe_load(ast_dict))
+ast_str =  js.window.ace.edit("output-textarea").getValue()
+ast_dict = yaml.safe_load(ast_str)
+if ast_dict is None or len(ast_dict.keys()) == 0:
+    content = js.window.default_code
+else: content = asts.unparse(ast_dict)
 js.window.ace.edit("code").setValue(content)
 `;
 
