@@ -391,7 +391,7 @@ def my_tracer(frame, event, arg = None):
         "func":func_name, 
         "lineno": line_no, 
         #"var_names": code.co_varnames, 
-        "locals": {k: v for k, v in frame.f_locals.items()}
+        "locals": [{"name": k, "value": v} for k, v in frame.f_locals.items()],
     })
   
   
