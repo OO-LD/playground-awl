@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>JSON Editor Interactive Example</title>
+    <title>Semantic AST / AWL Playground</title>
     <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.14.0/src-noconflict/ace.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
@@ -40,7 +40,7 @@
 <body>
     <div class='container-fluid' style="height: 100%;">
         <div class="row columns md:flex justify-content-center">
-            <h1><b>OO-LD Playground</b>  </h1>
+            <h1><b>Semantic AST / AWL Playground</b>  <a href="https://github.com/OO-LD/playground-awl">[source]</a> <a href="https://github.com/OO-LD/awl-schema">[schema]</a></h1>
             <div>
                 <a class="btn btn-primary" id="direct-link" title="Generates permalink in the address bar which preserves schema, value, and options">Generate Direct Link</a>
                 <a class="btn btn-secondary" href="?" title="reload editor with default example settings">Reset Playground</a>
@@ -66,19 +66,23 @@
                 <p>Python code represention of the abstract syntax tree (AST). Changes are synced with the JSON/YAML Output and JSON-LD playground (and vice versa) if you click "Geneate AST".</p>
                 <div id="code" rows="15"></div>
                 <button class='btn btn-primary btn-block' onclick="evaluatePython()">Generate AST</button>
+                <button class='btn btn-primary btn-block' onclick="executePython()">Execute & Trace Code</button>
                 <h2>Debug Console</h2>
                 <div id="output" style="width: 100%;" rows="6" disabled></div>
             </div>
             <div class='col-3 col-md-3 w-3/12'>
                 <h1>3. JSON/YAML AST Serialization</h1>
-                <p>You can also make changes to the JSON here and set the value in the editor by clicking "Update Form"
+                <p>You can also make changes to the AST and reconstruct the code by clicking "Generate Code"
                 </p>
                 <label for="output-textarea"></label>
                 <button class='btn btn-primary btn-block' id='setvalue'>Generate Code</button>
-                <div id='output-textarea' rows="15" style="width: 100%; font-family: monospace;"
+                <div id='output-textarea' rows="6" style="width: 100%; font-family: monospace;"
                     class='form-control'></div>
+                <h2>Trace of the code execution</h2>
+                <div id='execution-output-textarea' rows="6" style="width: 100%; font-family: monospace;"
+                    class='form-control'></div>                
                 <h2>Validation</h2>
-                <label for="validate-textarea">This will update whenever the form changes to show validation errors if
+                <label for="validate-textarea">This will update whenever the data changes to show validation errors if
                     there
                     are any.</label><br>
                 <textarea id='validate-textarea' readonly disabled class='form-control'></textarea>
@@ -307,7 +311,7 @@ class AstSerialization:
             "col_offset",
             "end_col_offset",
             "end_lineno",
-            "lineno",
+            #"lineno",
             "type_comment",
             "n",
             "s",
@@ -321,8 +325,6 @@ class AstSerialization:
         return ast_dict
 
     def unparse(self, ast_dict: dict = None) -> str:
-        if ast_dict is None:
-            ast_dict = self.ast_dict
         ast_dict = self.add_key(ast_dict, "lineno", 0) # needed to unparse
         ast_tree = json2ast(ast_dict)
         source = ast.unparse(ast_tree)
@@ -334,11 +336,21 @@ class AstSerialization:
 
 `;
 
-const default_code = `
-if a == 1:
-    b = 1
-else:
-    b = 2
+var default_code = `def function_one(x):
+    return x
+def function_two(y):
+    return y
+def function_three(c,d):
+    return c + d 
+def my_workflow(a, b, d=0):
+    if a > 0:
+        c = function_one(a)
+    else:
+        c = function_two(b)
+    while d <= 0:
+        d = function_three(c, d)
+    return d
+my_workflow(1,2)
 `;
 
 const astgen_code = class_code + `
@@ -354,11 +366,92 @@ js.window.ace.edit("output-textarea").setValue(content)
 js.window.jsoneditor.setValue(js.window.JSON.parse(content_json))
 `
 
+const execute_code = class_code + `
+
+from sys import settrace 
+import yaml
+traces = []
+# local trace function which returns itself 
+# see also https://docs.python.org/3/library/inspect.html
+def my_tracer(frame, event, arg = None): 
+    # extracts frame code 
+    code = frame.f_code 
+  
+    # extracts calling function name 
+    func_name = code.co_name 
+  
+    # extracts the line number 
+    line_no = frame.f_lineno - 33 - 74 # substract offset of wrapping code
+    #print(frame.f_locals)
+    #print(frame.f_globals)
+    #print(f"A {event} encountered in {code.co_filename}/{func_name}({code.co_varnames}) at line number {line_no} ") 
+    traces.append({
+        "type": event, 
+        #"src": code.co_filename, 
+        "func":func_name, 
+        "lineno": line_no, 
+        #"var_names": code.co_varnames, 
+        "locals": {k: v for k, v in frame.f_locals.items()}
+    })
+  
+  
+    return my_tracer 
+
+settrace(my_tracer)
+
+{{{user_code}}}
+
+# disable the local trace function
+settrace(None)
+
+# build lineno index
+index = {}
+asts = AstSerialization()
+source = js.window.ace.edit("code").getValue()
+ast_dict = asts.parse(source)
+def recurse(obj):
+    if isinstance(obj, dict):
+        if 'lineno' in obj:
+            def deep_copy_except_body(o):
+                if isinstance(o, dict):
+                    result = {}
+                    for k, v in o.items():
+                        if k == 'body':
+                            continue  # Skip the 'body' key and its value
+                        else:
+                            result[k] = deep_copy_except_body(v)
+                    return result
+                elif isinstance(o, list):
+                    return [deep_copy_except_body(item) for item in o]
+                else:
+                    return o
+
+            #obj_copy = deep_copy_except_body(obj)
+            # Create a shallow copy without subobjects
+            obj_copy = {k: v for k, v in obj.items() if not isinstance(v, (dict, list))}
+            if obj['lineno'] not in index: index[obj['lineno']] = obj_copy
+        for value in obj.values():
+            recurse(value)
+    elif isinstance(obj, list):
+        for item in obj:
+            recurse(item)
+recurse(ast_dict)
+for trace in traces:
+    if trace["lineno"] in index:
+        trace["code"] = index[trace["lineno"]]
+yaml.Dumper.ignore_aliases = lambda *args : True
+output = yaml.dump(traces)
+js.window.ace.edit('execution-output-textarea').setValue(output)
+`;
+
 const codegen_code = class_code + `
 print("Generating Code...")
 asts = AstSerialization()
-ast_dict =  js.window.ace.edit("output-textarea").getValue()
-content = asts.unparse(yaml.safe_load(ast_dict))
+ast_str =  js.window.ace.edit("output-textarea").getValue()
+ast_dict = yaml.safe_load(ast_str)
+if ast_dict is None or len(ast_dict.keys()) == 0:
+    content = js.window.default_code
+else: content = asts.unparse(ast_dict)
 js.window.ace.edit("code").setValue(content)
 `;
 
@@ -397,7 +490,7 @@ js.window.ace.edit("code").setValue(content)
         var libSelect = document.querySelector('#lib-select')
         var jsonEditorForm = document.querySelector('#json-editor-form')
         var objectLayoutSelect = document.querySelector('#object-layout-select')
-        var outputTextarea = ace.edit('output-textarea', aceConfig)
+        var outputTextarea = ace.edit('output-textarea', {...aceConfig, ...{maxLines: 10}})
         var schemaTextarea = ace.edit('schema-textarea', aceConfig)
         var setSchema = document.querySelector('#setschema')
         var setValue = document.querySelector('#setvalue')
@@ -408,6 +501,7 @@ js.window.ace.edit("code").setValue(content)
 
         const code = ace.edit('code', {mode: 'ace/mode/python', maxLines: Infinity, minLines: 5, fontSize: "12pt"});
         const output = ace.edit('output', {mode: 'ace/mode/sh', maxLines: Infinity, minLines: 5, fontSize: "12pt"});
+        const execution_output = ace.edit('execution-output-textarea', {...aceConfig, ...{maxLines: 10}});
         
         function addToOutput(s) {
             //output.value += ">>>" + code.value + "\n" ;
@@ -462,6 +556,17 @@ js.window.ace.edit("code").setValue(content)
             let pyodide = await pyodideReadyPromise;
             try {
                 let output = pyodide.runPython(astgen_code);
+                addToOutput(output);
+            } catch (err) {
+                addToOutput(err);
+            }
+        }
+
+        async function executePython() {
+            let pyodide = await pyodideReadyPromise;
+            try {
+                // console.log(execute_code.replace("{{{user_code}}}", window.ace.edit("code").getValue()));
+                let output = pyodide.runPython(execute_code.replace("{{{user_code}}}", window.ace.edit("code").getValue()));
                 addToOutput(output);
             } catch (err) {
                 addToOutput(err);
